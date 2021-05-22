@@ -1,0 +1,122 @@
+---
+title: "Segmentation Project"
+author: "Nissa Febriani"
+date: "5/1/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Library Preparation
+```{r}
+library(tidyverse) 
+library(cluster) 
+library(factoextra)
+library(ggplot2)
+```
+
+
+Reading the Data
+```{r}
+setwd("C:/Users/Dell/Downloads/WDR")
+getwd
+
+movie <- read.csv("customer_movie_rating.csv")
+movie2 <- read.csv("customer_movie_rating.csv")
+
+```
+
+
+Summary of the data
+```{r}
+head(movie)
+```
+
+```{r}
+glimpse(movie)
+```
+The dataset consists of 291 data regarding the assessment of 5 film genres, namely horror, romcom, action, comedy, and fantasy. 
+
+
+Cleaning the Data
+```{r}
+
+movie <- na.omit(movie)
+movie <- scale(movie)
+
+head(movie)
+```
+
+
+Choosing k-optimal
+```{r}
+set.seed(123)
+fviz_nbclust(movie, kmeans, method = "wss")
+```
+```{r}
+set.seed(123)
+fviz_nbclust(movie, kmeans, method ="silhouette")
+```
+```{r}
+library(cluster)
+# compute gap statistic
+set.seed(123)
+gap_stat <- clusGap(movie, FUN = kmeans, nstart = 25, K.max = 10, B = 50)
+
+
+# Print the result
+print(gap_stat, method = "firstmax")
+fviz_gap_stat(gap_stat)
+```
+
+Based on the optimal search for k, k = 3 will be selected 
+
+
+Building K-means Model
+```{r}
+k3 <- kmeans(movie, centers = 3, nstart = 25)
+
+str(k3)
+```
+
+Visualizing the Model
+```{r}
+fviz_cluster(k3, data = movie)
+```
+```{r}
+head(movie2)
+```
+
+
+
+Cluster Analysis
+```{r}
+str(k3)
+
+movie2 %>%
+  mutate(Cluster = k3$cluster) %>%
+  group_by(Cluster) %>%
+  summarise_all("mean")
+```
+
+```{r}
+
+movie %>%
+  as_tibble() %>%
+  mutate(cluster = k3$cluster, score = row.names(movie)) %>%
+  ggplot(aes(Horror, Comedy, color = factor(cluster), label = score)) + geom_text()
+
+
+```
+Explanation:
+Cluster 1 is a group that gives high marks to the comedy genre and low scores to the horror genre. Cluster 2 is a group that gives high marks to the comedy genre and gives moderate ratings to the horror genre.
+Cluster 3 is a group that gives low marks to the comedy genre and gives high marks to the horror genre.
+
+
+
+
+
+
